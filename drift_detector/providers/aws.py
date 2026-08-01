@@ -94,13 +94,25 @@ class AWSProvider(CloudProvider):
         resources: list[ResourceModel] = []
         for bucket in client.list_buckets().get("Buckets", []):
             name = bucket["Name"]
-            tags: dict[str, str] = {}
-            try:
-                tags = self._tags_from_aws(client.get_bucket_tagging(Bucket=name).get("TagSet"))
-            except client.exceptions.NoSuchTagSet:
-                tags = {}
+            tags = self._fetch_s3_bucket_tags(client, name)
             resources.append(ResourceModel(provider="aws", type="aws_s3_bucket", id=name, name=name, attributes={"id": name, "bucket": name}, tags=tags, raw=bucket))
         return resources
+
+    def _fetch_s3_bucket_tags(self, client: Any, bucket_name: str) -> dict[str, str]:
+        try:
+            return self._tags_from_aws(client.get_bucket_tagging(Bucket=bucket_name).get("TagSet"))
+        except Exception as exc:
+            if self._aws_error_code(exc) == "NoSuchTagSet":
+                return {}
+            raise
+
+    @staticmethod
+    def _aws_error_code(exc: Exception) -> str | None:
+        response = getattr(exc, "response", None)
+        if not isinstance(response, dict):
+            return None
+        error = response.get("Error", {})
+        return error.get("Code")
 
     def _fetch_iam_roles(self) -> list[ResourceModel]:
         client = self._client("iam")

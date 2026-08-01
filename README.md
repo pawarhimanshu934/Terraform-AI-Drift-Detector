@@ -103,3 +103,9 @@ Terraform State -> State Reader -> Expected Resource Model
 AWS APIs/Input -> Cloud Fetcher -> Actual Resource Model
 Expected + Actual -> Drift Engine -> Console/JSON Report
 ```
+
+## Troubleshooting
+
+### S3 buckets without tags
+
+AWS returns a `NoSuchTagSet` ClientError when an S3 bucket exists but has no tags. The scanner treats that as an empty tag set so untagged buckets can still be compared instead of failing the scan.

@@ -5,17 +5,34 @@ A cloud-agnostic Terraform drift detection platform that compares Terraform stat
 ## What it does
 
 - Reads expected resources from local Terraform state files.
+- Fetches actual AWS resources directly from your AWS account when `--actual` is not supplied.
 - Normalizes expected and actual resources into a shared model.
 - Detects missing resources, unexpected resources, attribute changes, and tag drift.
 - Emits console or JSON reports for CLI, automation, and future dashboard usage.
 - Keeps provider fetching behind an extensible adapter interface.
 
-## Quickstart
+## Quickstart with your AWS account
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[dev]'
+pip install -e '.[aws,dev]'
+aws sts get-caller-identity
+
+drift-detector scan \
+  --state /path/to/terraform.tfstate \
+  --provider aws \
+  --profile your-aws-profile \
+  --region us-east-1
+```
+
+If you omit `--actual`, the CLI performs a live AWS scan and compares AWS API results with the Terraform state file.
+
+## Fixture-based local test mode
+
+You can still test without AWS credentials by providing normalized actual-resource JSON:
+
+```bash
 drift-detector state inspect tests/fixtures/terraform.tfstate
 drift-detector scan --state tests/fixtures/terraform.tfstate --actual examples/actual-resources.json
 ```
@@ -28,16 +45,22 @@ Inspect managed resources in Terraform state:
 drift-detector state inspect ./terraform.tfstate
 ```
 
-Run a scan and print a console report:
+Run a live AWS scan and print a console report:
+
+```bash
+drift-detector scan --state ./terraform.tfstate --provider aws --profile default --region us-east-1
+```
+
+Run a live AWS scan and write JSON output:
+
+```bash
+drift-detector scan --config examples/config.yaml --output json --file report.json
+```
+
+Run a fixture-based scan with manually supplied actual resources:
 
 ```bash
 drift-detector scan --state ./terraform.tfstate --actual ./actual-resources.json
-```
-
-Run a scan and write JSON output:
-
-```bash
-drift-detector scan --config examples/config.yaml --actual examples/actual-resources.json --output json --file report.json
 ```
 
 ## Configuration
@@ -59,14 +82,24 @@ ignore:
     - "aws:*"
 ```
 
+## Supported live AWS resources
+
+The live AWS provider currently fetches these Terraform resource types when they appear in state:
+
+- `aws_instance`
+- `aws_security_group`
+- `aws_s3_bucket`
+- `aws_iam_role`
+- `aws_lambda_function`
+
 ## Current implementation status
 
-This initial MVP includes the project scaffold, typed models, local state reader, resource extractor, drift engine, console reporter, JSON reporter, CLI commands, examples, and unit tests. The AWS provider is intentionally exposed as an adapter skeleton so live API fetchers can be added without changing the drift engine.
+This MVP includes the project scaffold, typed models, local state reader, resource extractor, live AWS provider fetcher, drift engine, console reporter, JSON reporter, CLI commands, examples, and unit tests.
 
 ## Architecture
 
 ```text
 Terraform State -> State Reader -> Expected Resource Model
-Cloud APIs/Input -> Cloud Fetcher -> Actual Resource Model
+AWS APIs/Input -> Cloud Fetcher -> Actual Resource Model
 Expected + Actual -> Drift Engine -> Console/JSON Report
 ```

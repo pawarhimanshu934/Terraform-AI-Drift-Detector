@@ -1,0 +1,14 @@
+provider:
+  name: aws
+  profile: default
+  regions:
+    - us-east-1
+state:
+  source: local
+  path: tests/fixtures/terraform.tfstate
+ignore:
+  attributes:
+    - "*.arn"
+    - "*.last_modified"
+  tags:
+    - "aws:*"

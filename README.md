@@ -113,3 +113,7 @@ AWS returns a `NoSuchTagSet` ClientError when an S3 bucket exists but has no tag
 ## Console output format
 
 The default console report is intentionally compact: it prints scan metadata, a summary block, and one tabular row per finding with kind, severity, resource, field, expected value, and actual value.
+
+### Unsupported Terraform resource types
+
+A live provider only compares resource types it knows how to fetch from cloud APIs. Terraform helper resources such as S3 bucket versioning, ownership controls, encryption, or public access blocks may share the same bucket ID as the parent bucket. Unsupported helper resources are reported as `unsupported_resource` instead of `missing_resource` so they do not look like deleted infrastructure.

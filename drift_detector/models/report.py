@@ -17,6 +17,7 @@ class ReportSummary:
     unexpected_resources: int = 0
     modified_resources: int = 0
     tag_drifts: int = 0
+    unsupported_resources: int = 0
 
 
 @dataclass

@@ -36,17 +36,23 @@ def _scan(args: argparse.Namespace) -> None:
         raise SystemExit("Provide --state or --config.")
 
     expected = extract_expected_resources(TerraformStateReader().read(state_path))
-    actual_resources = load_actual_resources(args.actual) if args.actual else _fetch_live_resources(provider, expected, profile, regions)
-    report = DriftEngine(ignore).compare(expected, actual_resources, provider=provider, state_source=str(state_path))
+    unsupported_resource_types: set[str] = set()
+    if args.actual:
+        actual_resources = load_actual_resources(args.actual)
+    else:
+        provider_adapter = _build_live_provider(provider, profile, regions)
+        unsupported_resource_types = {resource.type for resource in expected if resource.type not in provider_adapter.supported_resource_types}
+        actual_resources = provider_adapter.fetch_resources(expected)
+    report = DriftEngine(ignore).compare(expected, actual_resources, provider=provider, state_source=str(state_path), unsupported_resource_types=unsupported_resource_types)
     if args.file:
         write_json(report, args.file)
     print(render_json(report) if args.output == "json" else render_console(report), end="")
 
 
-def _fetch_live_resources(provider: str, expected, profile: str | None, regions: list[str]):
+def _build_live_provider(provider: str, profile: str | None, regions: list[str]):
     if provider != "aws":
         raise SystemExit(f"Live scans for provider {provider!r} are not implemented yet. Provide --actual JSON instead.")
-    return AWSProvider(profile=profile, regions=regions).fetch_resources(expected)
+    return AWSProvider(profile=profile, regions=regions)
 
 
 def build_parser() -> argparse.ArgumentParser:

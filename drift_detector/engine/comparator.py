@@ -26,13 +26,19 @@ class DriftEngine:
         actual: list[ResourceModel],
         provider: str,
         state_source: str,
+        unsupported_resource_types: set[str] | None = None,
     ) -> DriftReport:
         started = datetime.now(timezone.utc)
         findings: list[DriftFinding] = []
         actual_by_identity = {resource.identity: resource for resource in actual}
         expected_by_identity = {resource.identity: resource for resource in expected}
 
+        unsupported_resource_types = unsupported_resource_types or set()
+
         for resource in expected:
+            if resource.type in unsupported_resource_types:
+                findings.append(DriftFinding(resource_id=resource.id, resource_type=resource.type, drift_type="unsupported_resource", severity="low", expected=resource.model_dump(mode="json"), actual=None, message=f"Resource type {resource.type} is not supported by the live {provider} fetcher yet."))
+                continue
             actual_resource = actual_by_identity.get(resource.identity)
             if actual_resource is None:
                 findings.append(DriftFinding(resource_id=resource.id, resource_type=resource.type, drift_type="missing_resource", severity="high", expected=resource.model_dump(mode="json"), actual=None, message=f"Expected resource {resource.identity} was not found in cloud inventory."))
@@ -52,6 +58,7 @@ class DriftEngine:
             unexpected_resources=sum(1 for item in findings if item.drift_type == "unexpected_resource"),
             modified_resources=sum(1 for item in findings if item.drift_type == "attribute_changed"),
             tag_drifts=sum(1 for item in findings if item.drift_type == "tag_changed"),
+            unsupported_resources=sum(1 for item in findings if item.drift_type == "unsupported_resource"),
         )
         return DriftReport(scan_id=f"scan-{uuid4().hex[:12]}", started_at=started, completed_at=datetime.now(timezone.utc), provider=provider, state_source=state_source, summary=summary, findings=findings)
 

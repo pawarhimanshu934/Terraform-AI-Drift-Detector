@@ -30,5 +30,5 @@ def test_console_report_uses_compact_summary_and_table():
     assert "Tag Changes:        1" in output
     assert "attribute_changed" in output
     assert "warning" in output
-    assert "bucket-123 (aws_s3_bucket)" in output
+    assert "aws_s3_bucket:bucket-123" in output
     assert "Message:" not in output

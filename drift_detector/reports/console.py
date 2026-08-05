@@ -33,6 +33,7 @@ def render_console(report: DriftReport) -> str:
         f"Extra in Cloud:     {report.summary.unexpected_resources}",
         f"Attribute Changes:  {report.summary.modified_resources}",
         f"Tag Changes:        {report.summary.tag_drifts}",
+        f"Unsupported Types:  {report.summary.unsupported_resources}",
         f"Total Findings:     {report.summary.findings}",
         "",
         "FINDINGS",
@@ -79,13 +80,15 @@ def _severity_label(severity: str) -> str:
 
 
 def _resource_label(resource_id: str, resource_type: str) -> str:
-    return f"{resource_id} ({resource_type})"
+    return f"{resource_type}:{resource_id}"
 
 
 def _format_value(value: Any) -> str:
     if value is None:
         return "<nil>"
     if isinstance(value, dict):
+        if "type" in value and "id" in value:
+            return _resource_label(str(value["id"]), str(value["type"]))
         return "{" + ", ".join(f"{key}: {value[key]}" for key in sorted(value)) + "}"
     return str(value)
 

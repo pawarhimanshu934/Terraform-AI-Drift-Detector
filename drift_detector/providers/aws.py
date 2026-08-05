@@ -11,6 +11,13 @@ class AWSProvider(CloudProvider):
     """AWS provider adapter that fetches live AWS resources for Terraform state entries."""
 
     name = "aws"
+    supported_resource_types = {
+        "aws_instance",
+        "aws_security_group",
+        "aws_s3_bucket",
+        "aws_iam_role",
+        "aws_lambda_function",
+    }
 
     def __init__(self, profile: str | None = None, regions: list[str] | None = None, session: Any | None = None) -> None:
         self.profile = profile

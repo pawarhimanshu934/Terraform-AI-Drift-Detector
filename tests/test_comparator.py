@@ -20,3 +20,13 @@ def test_detects_missing_and_unexpected_resources():
 
     assert report.summary.missing_resources == 1
     assert report.summary.unexpected_resources == 1
+
+
+def test_marks_live_provider_unsupported_types_without_missing_resource_noise():
+    expected = ResourceModel(provider="aws", type="aws_s3_bucket_versioning", id="bucket")
+
+    report = DriftEngine().compare([expected], [], provider="aws", state_source="fixture", unsupported_resource_types={"aws_s3_bucket_versioning"})
+
+    assert report.summary.missing_resources == 0
+    assert report.summary.unsupported_resources == 1
+    assert report.findings[0].drift_type == "unsupported_resource"

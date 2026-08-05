@@ -9,7 +9,7 @@ from drift_detector.models.drift import DriftFinding
 from drift_detector.models.report import DriftReport, ReportSummary
 from drift_detector.models.resource import ResourceModel
 
-_VOLATILE_ATTRIBUTES = {"arn", "created_at", "last_modified", "updated_at"}
+_VOLATILE_ATTRIBUTES = {"id", "arn", "created_at", "last_modified", "updated_at"}
 
 
 def _ignored(path: str, patterns: list[str]) -> bool:

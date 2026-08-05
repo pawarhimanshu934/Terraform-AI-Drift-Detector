@@ -109,3 +109,7 @@ Expected + Actual -> Drift Engine -> Console/JSON Report
 ### S3 buckets without tags
 
 AWS returns a `NoSuchTagSet` ClientError when an S3 bucket exists but has no tags. The scanner treats that as an empty tag set so untagged buckets can still be compared instead of failing the scan.
+
+## Console output format
+
+The default console report is intentionally compact: it prints scan metadata, a summary block, and one tabular row per finding with kind, severity, resource, field, expected value, and actual value.

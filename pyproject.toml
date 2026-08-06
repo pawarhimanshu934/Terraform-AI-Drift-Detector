@@ -17,6 +17,10 @@ dev = ["pytest>=8.0", "PyYAML>=6.0"]
 [project.scripts]
 drift-detector = "drift_detector.cli:app"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["drift_detector*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
